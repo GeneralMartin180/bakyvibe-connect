@@ -110,9 +110,9 @@ export default function CreatePost() {
           <div className="space-y-4">
             <Label htmlFor="image">Image *</Label>
             {!imagePreview ? (
-              <div className="border-2 border-dashed border-border rounded-2xl p-12 text-center hover:border-primary transition-colors cursor-pointer">
+              <div className="border-2 border-dashed border-border rounded-2xl p-12 text-center hover:border-primary transition-all duration-300 cursor-pointer hover:shadow-glow">
                 <label htmlFor="image" className="cursor-pointer">
-                  <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                  <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground transition-transform duration-200 hover:scale-110" />
                   <p className="text-sm text-muted-foreground mb-2">
                     Click to upload an image
                   </p>
@@ -129,11 +129,11 @@ export default function CreatePost() {
                 </label>
               </div>
             ) : (
-              <div className="relative rounded-2xl overflow-hidden">
+              <div className="relative rounded-2xl overflow-hidden group">
                 <img 
                   src={imagePreview} 
                   alt="Preview" 
-                  className="w-full aspect-square object-cover"
+                  className="w-full aspect-square object-cover transition-transform duration-300 group-hover:scale-105"
                 />
                 <Button
                   type="button"

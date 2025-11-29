@@ -110,7 +110,7 @@ export default function Profile() {
       {/* Profile Header */}
       <div className="glass rounded-3xl p-8 mb-6 animate-fade-in">
         <div className="flex flex-col md:flex-row items-start gap-8">
-          <Avatar className="w-32 h-32 border-4 border-primary/20">
+          <Avatar className="w-32 h-32 border-4 border-primary/20 transition-transform duration-300 hover:scale-105">
             <AvatarImage src={profile?.avatar_url || undefined} />
             <AvatarFallback className="text-4xl bg-gradient-primary text-white">
               {profile?.display_name?.[0] || profile?.username?.[0] || 'U'}
@@ -124,10 +124,10 @@ export default function Profile() {
                 <p className="text-muted-foreground">@{profile?.username}</p>
               </div>
               <div className="flex gap-2">
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="hover:scale-110 transition-all duration-200">
                   <Settings className="w-5 h-5" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={handleLogout}>
+                <Button variant="ghost" size="icon" onClick={handleLogout} className="hover:scale-110 transition-all duration-200">
                   <LogOut className="w-5 h-5" />
                 </Button>
               </div>

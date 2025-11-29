@@ -91,21 +91,21 @@ export default function Auth() {
         {/* Logo & Header */}
         <div className="text-center space-y-4">
           <div className="flex justify-center">
-            <div className="w-20 h-20 rounded-full bg-gradient-primary flex items-center justify-center glow">
+            <div className="w-20 h-20 rounded-full bg-gradient-primary flex items-center justify-center glow animate-pulse">
               <img src={bakyLogo} alt="BakyChat" className="w-12 h-12" />
             </div>
           </div>
           <h1 className="text-4xl font-bold gradient-text">BakyChat</h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground transition-all duration-300">
             {isLogin ? 'Welcome back! Sign in to continue' : 'Join the community'}
           </p>
         </div>
 
         {/* Auth Form */}
-        <div className="glass rounded-3xl p-8 space-y-6">
+        <div className="glass rounded-3xl p-8 space-y-6 transition-all duration-300">
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
-              <>
+              <div className="space-y-4 animate-slide-up">
                 <div className="space-y-2">
                   <Label htmlFor="username">Username</Label>
                   <Input
@@ -115,7 +115,7 @@ export default function Auth() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
-                    className="bg-background/50"
+                    className="bg-background/50 transition-all duration-200 focus:scale-[1.02]"
                   />
                 </div>
                 <div className="space-y-2">
@@ -126,10 +126,10 @@ export default function Auth() {
                     placeholder="Your Name"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    className="bg-background/50"
+                    className="bg-background/50 transition-all duration-200 focus:scale-[1.02]"
                   />
                 </div>
-              </>
+              </div>
             )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -140,7 +140,7 @@ export default function Auth() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-background/50"
+                className="bg-background/50 transition-all duration-200 focus:scale-[1.02] focus:shadow-glow"
               />
             </div>
             <div className="space-y-2">
@@ -153,22 +153,36 @@ export default function Auth() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="bg-background/50"
+                className="bg-background/50 transition-all duration-200 focus:scale-[1.02] focus:shadow-glow"
               />
             </div>
             <Button
               type="submit"
-              className="w-full bg-gradient-primary hover:opacity-90 text-white font-semibold"
+              className="w-full bg-gradient-primary hover:opacity-90 hover:scale-[1.02] text-white font-semibold transition-all duration-200"
               disabled={loading}
             >
-              {loading ? "Loading..." : isLogin ? "Sign In" : "Sign Up"}
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Loading...
+                </span>
+              ) : (
+                isLogin ? "Sign In" : "Sign Up"
+              )}
             </Button>
           </form>
 
           <div className="text-center">
             <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-primary hover:underline"
+              onClick={() => {
+                setIsLogin(!isLogin);
+                // Reset form fields
+                setEmail("");
+                setPassword("");
+                setUsername("");
+                setDisplayName("");
+              }}
+              className="text-sm text-primary hover:underline transition-all duration-200 hover:text-primary-glow"
             >
               {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
             </button>

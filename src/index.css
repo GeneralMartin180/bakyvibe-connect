@@ -119,6 +119,12 @@ All colors MUST be HSL.
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid hsl(var(--border) / 0.2);
+    transition: all 0.3s ease;
+  }
+
+  .glass:hover {
+    background: hsl(var(--card) / 0.8);
+    border-color: hsl(var(--border) / 0.3);
   }
 
   /* Gradient text */
@@ -131,11 +137,11 @@ All colors MUST be HSL.
 
   /* Smooth hover scale */
   .hover-lift {
-    transition: var(--transition-smooth);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .hover-lift:hover {
-    transform: translateY(-2px);
+    transform: translateY(-4px);
     box-shadow: var(--shadow-hover);
   }
 

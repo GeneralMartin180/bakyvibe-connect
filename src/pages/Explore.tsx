@@ -68,16 +68,16 @@ export default function Explore() {
   return (
     <div className="max-w-2xl mx-auto pb-20 md:pb-6">
       <div className="mb-6 animate-fade-in">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Search users..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-12 glass border-none h-12 rounded-2xl"
-          />
-        </div>
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground transition-colors" />
+            <Input
+              type="text"
+              placeholder="Search users..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-12 glass border-none h-12 rounded-2xl focus:shadow-glow"
+            />
+          </div>
       </div>
 
       <div className="space-y-3">
@@ -92,7 +92,7 @@ export default function Explore() {
               to={`/profile/${user.username}`}
               className="glass rounded-2xl p-4 flex items-center gap-4 hover-lift block animate-fade-in"
             >
-              <Avatar className="w-16 h-16 border-2 border-primary/20">
+              <Avatar className="w-16 h-16 border-2 border-primary/20 transition-transform duration-200 hover:scale-110">
                 <AvatarImage src={user.avatar_url || undefined} />
                 <AvatarFallback className="bg-gradient-primary text-white text-xl">
                   {user.display_name?.[0] || user.username[0]}
