@@ -68,7 +68,7 @@ export const PostCard = ({ post, currentUserId }: PostCardProps) => {
     <div className="glass rounded-2xl overflow-hidden hover-lift animate-fade-in mb-6">
       {/* Post Header */}
       <div className="flex items-center gap-3 p-4">
-        <Avatar className="w-10 h-10 border-2 border-primary/20">
+        <Avatar className="w-10 h-10 border-2 border-primary/20 transition-transform duration-200 hover:scale-110">
           <AvatarImage src={post.profiles.avatar_url || undefined} />
           <AvatarFallback className="bg-gradient-primary text-white">
             {post.profiles.display_name?.[0] || post.profiles.username[0]}
@@ -81,11 +81,11 @@ export const PostCard = ({ post, currentUserId }: PostCardProps) => {
       </div>
 
       {/* Post Image */}
-      <div className="relative aspect-square bg-muted">
+      <div className="relative aspect-square bg-muted overflow-hidden group">
         <img 
           src={post.image_url} 
           alt="Post" 
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
       </div>
 
@@ -96,20 +96,20 @@ export const PostCard = ({ post, currentUserId }: PostCardProps) => {
             <Button
               variant="ghost"
               size="sm"
-              className={`gap-2 hover:text-secondary ${isLiked ? 'text-secondary' : ''}`}
+              className={`gap-2 hover:text-secondary transition-all duration-200 ${isLiked ? 'text-secondary animate-scale-in' : ''}`}
               onClick={handleLike}
               disabled={isLiking}
             >
-              <Heart className={`w-6 h-6 ${isLiked ? 'fill-current' : ''}`} />
+              <Heart className={`w-6 h-6 transition-all duration-200 ${isLiked ? 'fill-current scale-110' : 'hover:scale-110'}`} />
             </Button>
-            <Button variant="ghost" size="sm" className="gap-2">
+            <Button variant="ghost" size="sm" className="gap-2 hover:scale-110 transition-all duration-200">
               <MessageCircle className="w-6 h-6" />
             </Button>
-            <Button variant="ghost" size="sm" className="gap-2">
+            <Button variant="ghost" size="sm" className="gap-2 hover:scale-110 transition-all duration-200">
               <Send className="w-6 h-6" />
             </Button>
           </div>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" className="hover:scale-110 transition-all duration-200">
             <Bookmark className="w-6 h-6" />
           </Button>
         </div>

@@ -10,17 +10,17 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen bg-background">
       {/* Top Navigation */}
-      <header className="sticky top-0 z-50 glass border-b border-border/50">
+      <header className="sticky top-0 z-50 glass border-b border-border/50 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 hover-lift">
-            <img src={bakyLogo} alt="BakyChat" className="w-10 h-10" />
+          <Link to="/" className="flex items-center gap-2 hover-lift group">
+            <img src={bakyLogo} alt="BakyChat" className="w-10 h-10 transition-transform duration-300 group-hover:rotate-12" />
             <h1 className="text-2xl font-bold gradient-text">BakyChat</h1>
           </Link>
           
           <nav className="hidden md:flex items-center gap-6">
             <Link 
               to="/" 
-              className={`flex items-center gap-2 transition-colors ${
+              className={`flex items-center gap-2 transition-all duration-200 hover:scale-105 ${
                 isActive('/') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -29,7 +29,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             </Link>
             <Link 
               to="/explore" 
-              className={`flex items-center gap-2 transition-colors ${
+              className={`flex items-center gap-2 transition-all duration-200 hover:scale-105 ${
                 isActive('/explore') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -38,7 +38,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             </Link>
             <Link 
               to="/create" 
-              className={`flex items-center gap-2 transition-colors ${
+              className={`flex items-center gap-2 transition-all duration-200 hover:scale-105 ${
                 isActive('/create') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -47,7 +47,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             </Link>
             <Link 
               to="/profile" 
-              className={`flex items-center gap-2 transition-colors ${
+              className={`flex items-center gap-2 transition-all duration-200 hover:scale-105 ${
                 isActive('/profile') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -59,16 +59,16 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-6">
+      <main className="max-w-7xl mx-auto px-4 py-6 animate-fade-in">
         {children}
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-border/50 z-50">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 glass border-t border-border/50 z-50 backdrop-blur-xl">
         <div className="flex items-center justify-around py-3 px-4">
           <Link 
             to="/" 
-            className={`flex flex-col items-center gap-1 transition-colors ${
+            className={`flex flex-col items-center gap-1 transition-all duration-200 hover:scale-110 ${
               isActive('/') ? 'text-primary' : 'text-muted-foreground'
             }`}
           >
@@ -76,7 +76,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           </Link>
           <Link 
             to="/explore" 
-            className={`flex flex-col items-center gap-1 transition-colors ${
+            className={`flex flex-col items-center gap-1 transition-all duration-200 hover:scale-110 ${
               isActive('/explore') ? 'text-primary' : 'text-muted-foreground'
             }`}
           >
@@ -84,7 +84,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           </Link>
           <Link 
             to="/create" 
-            className={`flex flex-col items-center gap-1 transition-colors ${
+            className={`flex flex-col items-center gap-1 transition-all duration-200 hover:scale-110 ${
               isActive('/create') ? 'text-primary' : 'text-muted-foreground'
             }`}
           >
@@ -92,7 +92,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           </Link>
           <Link 
             to="/profile" 
-            className={`flex flex-col items-center gap-1 transition-colors ${
+            className={`flex flex-col items-center gap-1 transition-all duration-200 hover:scale-110 ${
               isActive('/profile') ? 'text-primary' : 'text-muted-foreground'
             }`}
           >
