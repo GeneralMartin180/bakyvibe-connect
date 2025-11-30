@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Settings, LogOut, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Profile() {
+  const { id } = useParams<{ id: string }>(); // DYNAMIC PROFILE ID
   const [profile, setProfile] = useState<any>(null);
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,19 +18,25 @@ export default function Profile() {
 
   useEffect(() => {
     checkAuth();
-  }, []);
+  }, [id]); // zmeny id -> refresh
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
-    
+
     if (!session) {
       navigate('/auth');
       return;
     }
 
     setCurrentUserId(session.user.id);
-    fetchProfile(session.user.id);
-    fetchUserPosts(session.user.id);
+
+    if (!id) { // ak nie je id v URL -> current user
+      fetchProfile(session.user.id);
+      fetchUserPosts(session.user.id);
+    } else { // iný používateľ
+      fetchProfile(id);
+      fetchUserPosts(id);
+    }
   };
 
   const fetchProfile = async (userId: string) => {
@@ -86,7 +93,6 @@ export default function Profile() {
   };
 
   const handleMessage = async () => {
-    // For now, just navigate to messages
     navigate('/messages');
   };
 
@@ -109,6 +115,8 @@ export default function Profile() {
       </div>
     );
   }
+
+  if (!profile) return <div>Profil nenájdený 😢</div>;
 
   return (
     <div className="max-w-4xl mx-auto pb-20 md:pb-6">
@@ -135,15 +143,15 @@ export default function Profile() {
                 <Button variant="ghost" size="icon" className="hover:scale-110 transition-all duration-200">
                   <Settings className="w-5 h-5" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={handleLogout} className="hover:scale-110 transition-all duration-200">
-                  <LogOut className="w-5 h-5" />
-                </Button>
+                {currentUserId === id && (
+                  <Button variant="ghost" size="icon" onClick={handleLogout} className="hover:scale-110 transition-all duration-200">
+                    <LogOut className="w-5 h-5" />
+                  </Button>
+                )}
               </div>
             </div>
 
-            {profile?.bio && (
-              <p className="text-sm">{profile.bio}</p>
-            )}
+            {profile?.bio && <p className="text-sm">{profile.bio}</p>}
 
             <div className="flex gap-6 text-sm">
               <div>
@@ -170,3 +178,4 @@ export default function Profile() {
     </div>
   );
 }
+
