@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { PostCard } from "@/components/PostCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, LogOut } from "lucide-react";
+import { Settings, LogOut, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Profile() {
@@ -85,6 +85,11 @@ export default function Profile() {
     }
   };
 
+  const handleMessage = async () => {
+    // For now, just navigate to messages
+    navigate('/messages');
+  };
+
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto">
@@ -124,6 +129,9 @@ export default function Profile() {
                 <p className="text-muted-foreground">@{profile?.username}</p>
               </div>
               <div className="flex gap-2">
+                <Button variant="ghost" size="icon" onClick={handleMessage} className="hover:scale-110 transition-all duration-200">
+                  <MessageCircle className="w-5 h-5" />
+                </Button>
                 <Button variant="ghost" size="icon" className="hover:scale-110 transition-all duration-200">
                   <Settings className="w-5 h-5" />
                 </Button>

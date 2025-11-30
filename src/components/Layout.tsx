@@ -1,9 +1,31 @@
-import { Home, Search, PlusSquare, User, Heart } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Home, Search, PlusSquare, User, MessageCircle, LogOut } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import bakyLogo from "@/assets/baky-logo.png";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null);
+  
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user || null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
   
   const isActive = (path: string) => location.pathname === path;
 
@@ -46,6 +68,15 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               <span className="font-medium">Create</span>
             </Link>
             <Link 
+              to="/messages" 
+              className={`flex items-center gap-2 transition-all duration-200 hover:scale-105 ${
+                isActive('/messages') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <MessageCircle className="w-5 h-5" />
+              <span className="font-medium">Messages</span>
+            </Link>
+            <Link 
               to="/profile" 
               className={`flex items-center gap-2 transition-all duration-200 hover:scale-105 ${
                 isActive('/profile') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
@@ -54,6 +85,16 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               <User className="w-5 h-5" />
               <span className="font-medium">Profile</span>
             </Link>
+            {user && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleLogout}
+                className="hover:scale-105 transition-all duration-200"
+              >
+                <LogOut className="w-5 h-5" />
+              </Button>
+            )}
           </nav>
         </div>
       </header>
@@ -89,6 +130,14 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             }`}
           >
             <PlusSquare className="w-6 h-6" />
+          </Link>
+          <Link 
+            to="/messages" 
+            className={`flex flex-col items-center gap-1 transition-all duration-200 hover:scale-110 ${
+              isActive('/messages') ? 'text-primary' : 'text-muted-foreground'
+            }`}
+          >
+            <MessageCircle className="w-6 h-6" />
           </Link>
           <Link 
             to="/profile" 
