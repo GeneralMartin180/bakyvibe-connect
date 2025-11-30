@@ -149,4 +149,9 @@ All colors MUST be HSL.
   .glow {
     box-shadow: var(--shadow-glow);
   }
+
+  /* Mirror for video */
+  .mirror {
+    transform: scaleX(-1);
+  }
 }

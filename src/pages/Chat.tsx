@@ -4,8 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Send, Phone, Video } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { CallModal } from "@/components/CallModal";
 
 interface Message {
   id: string;
@@ -30,6 +31,12 @@ export default function Chat() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [otherUser, setOtherUser] = useState<OtherUser | null>(null);
   const [loading, setLoading] = useState(false);
+  const [callModalOpen, setCallModalOpen] = useState(false);
+  const [callType, setCallType] = useState<'audio' | 'video'>('audio');
+  const [incomingCall, setIncomingCall] = useState<{
+    offer: RTCSessionDescriptionInit;
+    isVideo: boolean;
+  } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,28 +48,47 @@ export default function Chat() {
       setCurrentUserId(session.user.id);
       fetchMessages();
       fetchOtherUser(session.user.id);
+
+      // Subscribe to new messages and call events
+      const channel = supabase
+        .channel(`messages:${conversationId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `conversation_id=eq.${conversationId}`
+          },
+          (payload) => {
+            const message = payload.new as Message;
+            
+            // Check if it's a call-related message
+            try {
+              const content = JSON.parse(message.content);
+              if (content.type === 'call-offer' && message.sender_id !== session.user.id) {
+                setIncomingCall({
+                  offer: content.offer,
+                  isVideo: content.isVideo
+                });
+                setCallType(content.isVideo ? 'video' : 'audio');
+                setCallModalOpen(true);
+              } else if (!content.type) {
+                // Regular message
+                setMessages((prev) => [...prev, message]);
+              }
+            } catch {
+              // Regular message (not JSON)
+              setMessages((prev) => [...prev, message]);
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     });
-
-    // Subscribe to new messages
-    const channel = supabase
-      .channel(`messages:${conversationId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${conversationId}`
-        },
-        (payload) => {
-          setMessages((prev) => [...prev, payload.new as Message]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, [conversationId, navigate]);
 
   useEffect(() => {
@@ -82,7 +108,18 @@ export default function Chat() {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setMessages(data || []);
+      
+      // Filter out signaling messages (call-related)
+      const regularMessages = (data || []).filter(msg => {
+        try {
+          const content = JSON.parse(msg.content);
+          return !content.type || !['call-offer', 'call-answer', 'ice-candidate', 'call-end'].includes(content.type);
+        } catch {
+          return true;
+        }
+      });
+      
+      setMessages(regularMessages);
     } catch (error: any) {
       console.error('Error fetching messages:', error);
     }
@@ -152,13 +189,56 @@ export default function Chat() {
                 {otherUser.display_name?.[0] || otherUser.username[0]}
               </AvatarFallback>
             </Avatar>
-            <div>
+            <div className="flex-1">
               <p className="font-semibold">{otherUser.display_name || otherUser.username}</p>
               <p className="text-xs text-muted-foreground">@{otherUser.username}</p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setCallType('audio');
+                  setIncomingCall(null);
+                  setCallModalOpen(true);
+                }}
+                className="hover:scale-110 transition-all duration-200"
+              >
+                <Phone className="w-5 h-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setCallType('video');
+                  setIncomingCall(null);
+                  setCallModalOpen(true);
+                }}
+                className="hover:scale-110 transition-all duration-200"
+              >
+                <Video className="w-5 h-5" />
+              </Button>
             </div>
           </>
         )}
       </div>
+
+      {/* Call Modal */}
+      {otherUser && currentUserId && (
+        <CallModal
+          isOpen={callModalOpen}
+          onClose={() => {
+            setCallModalOpen(false);
+            setIncomingCall(null);
+          }}
+          conversationId={conversationId!}
+          currentUserId={currentUserId}
+          otherUser={otherUser}
+          callType={callType}
+          isIncoming={!!incomingCall}
+          callOffer={incomingCall?.offer}
+        />
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 glass rounded-none">
