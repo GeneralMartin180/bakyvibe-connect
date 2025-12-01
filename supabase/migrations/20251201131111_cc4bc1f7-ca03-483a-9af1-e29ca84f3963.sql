@@ -1,16 +1,20 @@
+-- =======================
 -- DROP a CREATE policy pre INSERT do conversations
+-- =======================
 DROP POLICY IF EXISTS "Users can create conversations" ON public.conversations;
 
-CREATE POLICY "Users can create their own conversation"
+CREATE POLICY IF NOT EXISTS "Users can create their own conversation"
 ON public.conversations
 FOR INSERT
-USING (true)  -- môže vytvoriť konverzáciu
-WITH CHECK (true); -- aplikácia/trigger musí zabezpečiť, že sa pridáva aj seba ako participant
+USING (true)        -- používateľ môže vytvoriť konverzáciu
+WITH CHECK (true);  -- trigger/aplikácia musí pridať seba ako participant
 
+-- =======================
 -- DROP a CREATE policy pre INSERT do conversation_participants
+-- =======================
 DROP POLICY IF EXISTS "Users can add participants to conversations" ON public.conversation_participants;
 
-CREATE POLICY "Users can add participants if they are in the conversation"
+CREATE POLICY IF NOT EXISTS "Users can add participants if they are in the conversation"
 ON public.conversation_participants
 FOR INSERT
 USING (
@@ -18,7 +22,7 @@ USING (
     SELECT 1
     FROM public.conversation_participants cp
     WHERE cp.conversation_id = conversation_participants.conversation_id
-    AND cp.user_id = auth.uid()
+      AND cp.user_id = auth.uid()
   )
 )
 WITH CHECK (
@@ -26,6 +30,6 @@ WITH CHECK (
     SELECT 1
     FROM public.conversation_participants cp
     WHERE cp.conversation_id = conversation_participants.conversation_id
-    AND cp.user_id = auth.uid()
+      AND cp.user_id = auth.uid()
   )
 );
