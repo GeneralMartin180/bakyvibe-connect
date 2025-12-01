@@ -1,36 +1,52 @@
--- Create conversations table
-CREATE TABLE public.conversations (
-  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+-- =======================
+-- EXTENSIONS
+-- =======================
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- =======================
+-- TABLES
+-- =======================
+
+-- Conversations table
+CREATE TABLE IF NOT EXISTS public.conversations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Create conversation_participants table
-CREATE TABLE public.conversation_participants (
-  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+-- Conversation participants
+CREATE TABLE IF NOT EXISTS public.conversation_participants (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   conversation_id UUID NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
   user_id UUID NOT NULL,
-  joined_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  joined_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE(conversation_id, user_id)
 );
 
--- Create messages table
-CREATE TABLE public.messages (
-  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+-- Messages
+CREATE TABLE IF NOT EXISTS public.messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   conversation_id UUID NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
   sender_id UUID NOT NULL,
   content TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   read BOOLEAN NOT NULL DEFAULT false
 );
 
--- Enable RLS
+-- =======================
+-- ENABLE RLS
+-- =======================
+
 ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.conversation_participants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies for conversations
-CREATE POLICY "Users can view their own conversations"
+-- =======================
+-- POLICIES: Conversations
+-- =======================
+
+-- iba členovia môžu SELECT svoje conversations
+CREATE POLICY "select_own_conversations"
 ON public.conversations FOR SELECT
 USING (
   EXISTS (
@@ -40,12 +56,23 @@ USING (
   )
 );
 
-CREATE POLICY "Users can create conversations"
+-- insert: tvorca musí byť účastník
+CREATE POLICY "insert_conversations"
 ON public.conversations FOR INSERT
-WITH CHECK (true);
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM public.conversation_participants cp
+    WHERE cp.conversation_id = conversations.id
+    AND cp.user_id = auth.uid()
+  )
+);
 
--- RLS Policies for conversation_participants
-CREATE POLICY "Users can view participants of their conversations"
+-- =======================
+-- POLICIES: Conversation Participants
+-- =======================
+
+-- iba členovia môžu SELECT participants
+CREATE POLICY "select_participants_in_own_conversations"
 ON public.conversation_participants FOR SELECT
 USING (
   EXISTS (
@@ -55,12 +82,23 @@ USING (
   )
 );
 
-CREATE POLICY "Users can add participants to conversations"
+-- insert: iba člen môže pridávať nových participants
+CREATE POLICY "insert_participants"
 ON public.conversation_participants FOR INSERT
-WITH CHECK (true);
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM public.conversation_participants cp
+    WHERE cp.conversation_id = conversation_participants.conversation_id
+    AND cp.user_id = auth.uid()
+  )
+);
 
--- RLS Policies for messages
-CREATE POLICY "Users can view messages in their conversations"
+-- =======================
+-- POLICIES: Messages
+-- =======================
+
+-- iba členovia môžu SELECT svoje messages
+CREATE POLICY "select_messages_in_own_conversations"
 ON public.messages FOR SELECT
 USING (
   EXISTS (
@@ -70,31 +108,35 @@ USING (
   )
 );
 
-CREATE POLICY "Users can send messages to their conversations"
+-- insert: iba člen + sender môže pridávať message
+CREATE POLICY "insert_own_messages"
 ON public.messages FOR INSERT
 WITH CHECK (
-  auth.uid() = sender_id AND
-  EXISTS (
+  auth.uid() = sender_id
+  AND EXISTS (
     SELECT 1 FROM public.conversation_participants
     WHERE conversation_id = messages.conversation_id
     AND user_id = auth.uid()
   )
 );
 
-CREATE POLICY "Users can update their own messages"
+-- update: iba sender môže meniť svoju message
+CREATE POLICY "update_own_messages"
 ON public.messages FOR UPDATE
 USING (
-  EXISTS (
-    SELECT 1 FROM public.conversation_participants
-    WHERE conversation_id = messages.conversation_id
-    AND user_id = auth.uid()
-  )
+  sender_id = auth.uid()
 );
 
--- Enable realtime for messages
+-- =======================
+-- REALTIME
+-- =======================
 ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
 
--- Create function to update conversation timestamp
+-- =======================
+-- TRIGGERS
+-- =======================
+
+-- aktualizovať conversations.updated_at pri novej správe
 CREATE OR REPLACE FUNCTION public.update_conversation_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -103,9 +145,8 @@ BEGIN
   WHERE id = NEW.conversation_id;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+$$ LANGUAGE plpgsql;
 
--- Trigger to update conversation timestamp on new message
 CREATE TRIGGER update_conversation_timestamp_trigger
 AFTER INSERT ON public.messages
 FOR EACH ROW
