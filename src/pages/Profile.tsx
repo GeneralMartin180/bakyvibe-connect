@@ -32,25 +32,32 @@ export default function Profile() {
 
     if (!id) { // ak nie je id v URL -> current user
       fetchProfile(session.user.id);
-      fetchUserPosts(session.user.id);
     } else { // iný používateľ
       fetchProfile(id);
-      fetchUserPosts(id);
     }
   };
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userIdOrUsername: string) => {
     try {
+      // Check if it's a UUID or username
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userIdOrUsername);
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
-        .single();
+        .eq(isUUID ? 'id' : 'username', userIdOrUsername)
+        .maybeSingle();
 
       if (error) throw error;
       setProfile(data);
+      
+      // Fetch posts using the actual user ID
+      if (data) {
+        fetchUserPosts(data.id);
+      }
     } catch (error: any) {
       console.error('Error fetching profile:', error);
+      setLoading(false);
     }
   };
 
@@ -93,7 +100,57 @@ export default function Profile() {
   };
 
   const handleMessage = async () => {
-    navigate('/messages');
+    if (!profile?.id || !currentUserId) return;
+    
+    // If viewing own profile, just go to messages list
+    if (profile.id === currentUserId) {
+      navigate('/messages');
+      return;
+    }
+
+    try {
+      // Check if conversation already exists
+      const { data: existingConversations } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id')
+        .eq('user_id', currentUserId);
+
+      if (existingConversations) {
+        for (const conv of existingConversations) {
+          const { data: otherParticipant } = await supabase
+            .from('conversation_participants')
+            .select('user_id')
+            .eq('conversation_id', conv.conversation_id)
+            .neq('user_id', currentUserId)
+            .single();
+
+          if (otherParticipant?.user_id === profile.id) {
+            navigate(`/chat/${conv.conversation_id}`);
+            return;
+          }
+        }
+      }
+
+      // Create new conversation
+      const { data: newConversation, error: convError } = await supabase
+        .from('conversations')
+        .insert({})
+        .select()
+        .single();
+
+      if (convError) throw convError;
+
+      // Add participants
+      await supabase.from('conversation_participants').insert([
+        { conversation_id: newConversation.id, user_id: currentUserId },
+        { conversation_id: newConversation.id, user_id: profile.id }
+      ]);
+
+      navigate(`/chat/${newConversation.id}`);
+    } catch (error: any) {
+      console.error('Error creating conversation:', error);
+      toast.error('Failed to start conversation');
+    }
   };
 
   if (loading) {
@@ -143,7 +200,7 @@ export default function Profile() {
                 <Button variant="ghost" size="icon" className="hover:scale-110 transition-all duration-200">
                   <Settings className="w-5 h-5" />
                 </Button>
-                {currentUserId === id && (
+                {currentUserId === profile?.id && (
                   <Button variant="ghost" size="icon" onClick={handleLogout} className="hover:scale-110 transition-all duration-200">
                     <LogOut className="w-5 h-5" />
                   </Button>
