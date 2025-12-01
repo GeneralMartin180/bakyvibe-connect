@@ -1,17 +1,31 @@
--- Drop and recreate the INSERT policy for conversations
+-- DROP a CREATE policy pre INSERT do conversations
 DROP POLICY IF EXISTS "Users can create conversations" ON public.conversations;
 
-CREATE POLICY "Authenticated users can create conversations"
+CREATE POLICY "Users can create their own conversation"
 ON public.conversations
 FOR INSERT
-TO authenticated
-WITH CHECK (true);
+USING (true)  -- môže vytvoriť konverzáciu
+WITH CHECK (true); -- aplikácia/trigger musí zabezpečiť, že sa pridáva aj seba ako participant
 
--- Also ensure the participants INSERT policy is correct
+-- DROP a CREATE policy pre INSERT do conversation_participants
 DROP POLICY IF EXISTS "Users can add participants to conversations" ON public.conversation_participants;
 
-CREATE POLICY "Authenticated users can add participants"
+CREATE POLICY "Users can add participants if they are in the conversation"
 ON public.conversation_participants
 FOR INSERT
-TO authenticated
-WITH CHECK (true);
+USING (
+  EXISTS (
+    SELECT 1
+    FROM public.conversation_participants cp
+    WHERE cp.conversation_id = conversation_participants.conversation_id
+    AND cp.user_id = auth.uid()
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM public.conversation_participants cp
+    WHERE cp.conversation_id = conversation_participants.conversation_id
+    AND cp.user_id = auth.uid()
+  )
+);
