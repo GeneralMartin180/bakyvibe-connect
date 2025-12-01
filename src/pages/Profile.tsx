@@ -109,22 +109,26 @@ export default function Profile() {
     }
 
     try {
-      // Check if conversation already exists
-      const { data: existingConversations } = await supabase
+      // Check if conversation already exists between these two users
+      const { data: myConversations } = await supabase
         .from('conversation_participants')
         .select('conversation_id')
         .eq('user_id', currentUserId);
 
-      if (existingConversations) {
-        for (const conv of existingConversations) {
-          const { data: otherParticipant } = await supabase
+      if (myConversations && myConversations.length > 0) {
+        // Check each conversation to see if the other user is in it
+        for (const conv of myConversations) {
+          const { data: participants } = await supabase
             .from('conversation_participants')
             .select('user_id')
-            .eq('conversation_id', conv.conversation_id)
-            .neq('user_id', currentUserId)
-            .single();
+            .eq('conversation_id', conv.conversation_id);
 
-          if (otherParticipant?.user_id === profile.id) {
+          const participantIds = participants?.map(p => p.user_id) || [];
+          
+          // If this conversation has exactly 2 participants and includes both users
+          if (participantIds.length === 2 && 
+              participantIds.includes(currentUserId) && 
+              participantIds.includes(profile.id)) {
             navigate(`/chat/${conv.conversation_id}`);
             return;
           }
@@ -138,17 +142,28 @@ export default function Profile() {
         .select()
         .single();
 
-      if (convError) throw convError;
+      if (convError) {
+        console.error('Error creating conversation:', convError);
+        throw convError;
+      }
 
-      // Add participants
-      await supabase.from('conversation_participants').insert([
-        { conversation_id: newConversation.id, user_id: currentUserId },
-        { conversation_id: newConversation.id, user_id: profile.id }
-      ]);
+      // Add both participants
+      const { error: participantsError } = await supabase
+        .from('conversation_participants')
+        .insert([
+          { conversation_id: newConversation.id, user_id: currentUserId },
+          { conversation_id: newConversation.id, user_id: profile.id }
+        ]);
+
+      if (participantsError) {
+        console.error('Error adding participants:', participantsError);
+        throw participantsError;
+      }
 
       navigate(`/chat/${newConversation.id}`);
+      toast.success('Conversation started!');
     } catch (error: any) {
-      console.error('Error creating conversation:', error);
+      console.error('Error in handleMessage:', error);
       toast.error('Failed to start conversation');
     }
   };
