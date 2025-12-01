@@ -100,7 +100,18 @@ export default function Profile() {
   };
 
   const handleMessage = async () => {
-    if (!profile?.id || !currentUserId) return;
+    console.log('handleMessage called', { profileId: profile?.id, currentUserId });
+    
+    if (!profile?.id) {
+      toast.error('Profile not loaded');
+      return;
+    }
+    
+    if (!currentUserId) {
+      toast.error('You must be logged in to start a conversation');
+      navigate('/auth');
+      return;
+    }
     
     // If viewing own profile, just go to messages list
     if (profile.id === currentUserId) {
@@ -110,18 +121,30 @@ export default function Profile() {
 
     try {
       // Check if conversation already exists between these two users
-      const { data: myConversations } = await supabase
+      const { data: myConversations, error: myConvError } = await supabase
         .from('conversation_participants')
         .select('conversation_id')
         .eq('user_id', currentUserId);
 
+      console.log('My conversations:', myConversations, myConvError);
+
+      if (myConvError) {
+        console.error('Error fetching my conversations:', myConvError);
+        throw myConvError;
+      }
+
       if (myConversations && myConversations.length > 0) {
         // Check each conversation to see if the other user is in it
         for (const conv of myConversations) {
-          const { data: participants } = await supabase
+          const { data: participants, error: partError } = await supabase
             .from('conversation_participants')
             .select('user_id')
             .eq('conversation_id', conv.conversation_id);
+
+          if (partError) {
+            console.error('Error fetching participants:', partError);
+            continue;
+          }
 
           const participantIds = participants?.map(p => p.user_id) || [];
           
@@ -129,11 +152,14 @@ export default function Profile() {
           if (participantIds.length === 2 && 
               participantIds.includes(currentUserId) && 
               participantIds.includes(profile.id)) {
+            console.log('Found existing conversation:', conv.conversation_id);
             navigate(`/chat/${conv.conversation_id}`);
             return;
           }
         }
       }
+
+      console.log('Creating new conversation...');
 
       // Create new conversation
       const { data: newConversation, error: convError } = await supabase
@@ -142,9 +168,15 @@ export default function Profile() {
         .select()
         .single();
 
+      console.log('Conversation created:', newConversation, convError);
+
       if (convError) {
         console.error('Error creating conversation:', convError);
         throw convError;
+      }
+
+      if (!newConversation) {
+        throw new Error('Failed to create conversation - no data returned');
       }
 
       // Add both participants
@@ -155,16 +187,19 @@ export default function Profile() {
           { conversation_id: newConversation.id, user_id: profile.id }
         ]);
 
+      console.log('Participants added:', participantsError);
+
       if (participantsError) {
         console.error('Error adding participants:', participantsError);
         throw participantsError;
       }
 
+      console.log('Navigating to chat:', newConversation.id);
       navigate(`/chat/${newConversation.id}`);
       toast.success('Conversation started!');
     } catch (error: any) {
       console.error('Error in handleMessage:', error);
-      toast.error('Failed to start conversation');
+      toast.error(`Failed to start conversation: ${error.message || 'Unknown error'}`);
     }
   };
 
