@@ -28,6 +28,7 @@ const App = () => (
           <Route path="/create" element={<Layout><CreatePost /></Layout>} />
           <Route path="/messages" element={<Layout><Messages /></Layout>} />
           <Route path="/chat/:conversationId" element={<Layout><Chat /></Layout>} />
+          <Route path="/profile" element={<Layout><Profile /></Layout>} />
           <Route path="/profile/:id" element={<Layout><Profile /></Layout>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
