@@ -1,4 +1,4 @@
-import { Home, Search, PlusSquare, User, MessageCircle, LogOut } from "lucide-react";
+import { Home, Search, PlusSquare, User, Circle, LogOut } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import bakyLogo from "@/assets/baky-logo.png";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,13 +69,13 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               <span className="font-medium">Create</span>
             </Link>
             <Link 
-              to="/messages" 
+              to="/stories" 
               className={`flex items-center gap-2 transition-all duration-200 hover:scale-105 ${
-                isActive('/messages') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+                isActive('/stories') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              <MessageCircle className="w-5 h-5" />
-              <span className="font-medium">Messages</span>
+              <Circle className="w-5 h-5" />
+              <span className="font-medium">Stories</span>
             </Link>
             <Link 
               to="/profile" 
@@ -133,12 +133,12 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             <PlusSquare className="w-6 h-6" />
           </Link>
           <Link 
-            to="/messages" 
+            to="/stories" 
             className={`flex flex-col items-center gap-1 transition-all duration-200 hover:scale-110 ${
-              isActive('/messages') ? 'text-primary' : 'text-muted-foreground'
+              isActive('/stories') ? 'text-primary' : 'text-muted-foreground'
             }`}
           >
-            <MessageCircle className="w-6 h-6" />
+            <Circle className="w-6 h-6" />
           </Link>
           <Link 
             to="/profile" 
