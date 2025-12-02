@@ -4,6 +4,7 @@ import bakyLogo from "@/assets/baky-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
+import { BakyAI } from "./BakyAI";
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
@@ -149,6 +150,9 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           </Link>
         </div>
       </nav>
+
+      {/* Baky AI Helper */}
+      <BakyAI />
     </div>
   );
 };
