@@ -5,7 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { PostCard } from "@/components/PostCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, LogOut, MessageCircle } from "lucide-react";
+import { EditProfileModal } from "@/components/EditProfileModal";
+import { Pencil, LogOut, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Profile() {
@@ -244,16 +245,22 @@ export default function Profile() {
                 <p className="text-muted-foreground">@{profile?.username}</p>
               </div>
               <div className="flex gap-2">
-                <Button variant="ghost" size="icon" onClick={handleMessage} className="hover:scale-110 transition-all duration-200">
-                  <MessageCircle className="w-5 h-5" />
-                </Button>
-                <Button variant="ghost" size="icon" className="hover:scale-110 transition-all duration-200">
-                  <Settings className="w-5 h-5" />
-                </Button>
-                {currentUserId === profile?.id && (
-                  <Button variant="ghost" size="icon" onClick={handleLogout} className="hover:scale-110 transition-all duration-200">
-                    <LogOut className="w-5 h-5" />
+                {currentUserId !== profile?.id && (
+                  <Button variant="ghost" size="icon" onClick={handleMessage} className="hover:scale-110 transition-all duration-200">
+                    <MessageCircle className="w-5 h-5" />
                   </Button>
+                )}
+                {currentUserId === profile?.id && (
+                  <>
+                    <EditProfileModal profile={profile} onProfileUpdate={() => fetchProfile(profile.id)}>
+                      <Button variant="ghost" size="icon" className="hover:scale-110 transition-all duration-200">
+                        <Pencil className="w-5 h-5" />
+                      </Button>
+                    </EditProfileModal>
+                    <Button variant="ghost" size="icon" onClick={handleLogout} className="hover:scale-110 transition-all duration-200">
+                      <LogOut className="w-5 h-5" />
+                    </Button>
+                  </>
                 )}
               </div>
             </div>
