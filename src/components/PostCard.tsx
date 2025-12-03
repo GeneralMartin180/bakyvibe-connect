@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { CommentsSection } from "./CommentsSection";
 
 interface PostCardProps {
   post: {
@@ -27,6 +28,7 @@ export const PostCard = ({ post, currentUserId }: PostCardProps) => {
   );
   const [likeCount, setLikeCount] = useState(post.likes.length);
   const [isLiking, setIsLiking] = useState(false);
+  const [showComments, setShowComments] = useState(false);
 
   const handleLike = async () => {
     if (!currentUserId || isLiking) return;
@@ -102,7 +104,12 @@ export const PostCard = ({ post, currentUserId }: PostCardProps) => {
             >
               <Heart className={`w-6 h-6 transition-all duration-200 ${isLiked ? 'fill-current scale-110' : 'hover:scale-110'}`} />
             </Button>
-            <Button variant="ghost" size="sm" className="gap-2 hover:scale-110 transition-all duration-200">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className={`gap-2 hover:scale-110 transition-all duration-200 ${showComments ? 'text-primary' : ''}`}
+              onClick={() => setShowComments(!showComments)}
+            >
               <MessageCircle className="w-6 h-6" />
             </Button>
             <Button variant="ghost" size="sm" className="gap-2 hover:scale-110 transition-all duration-200">
@@ -125,6 +132,11 @@ export const PostCard = ({ post, currentUserId }: PostCardProps) => {
             <span className="font-semibold mr-2">{post.profiles.username}</span>
             {post.caption}
           </p>
+        )}
+
+        {/* Comments Section */}
+        {showComments && (
+          <CommentsSection postId={post.id} currentUserId={currentUserId} />
         )}
 
         {/* Timestamp */}
