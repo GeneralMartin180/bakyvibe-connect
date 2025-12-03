@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Plus, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { CommentsSection } from "@/components/CommentsSection";
 
 interface Story {
   id: string;
@@ -282,19 +283,28 @@ const Stories = () => {
           {/* Navigation areas */}
           <button
             onClick={prevStory}
-            className="absolute left-0 top-0 bottom-0 w-1/3 z-40"
+            className="absolute left-0 top-24 bottom-24 w-1/4 z-40"
           />
           <button
             onClick={nextStory}
-            className="absolute right-0 top-0 bottom-0 w-2/3 z-40"
+            className="absolute right-0 top-24 bottom-24 w-1/4 z-40"
           />
 
           {/* Story Image */}
           <img
             src={viewingStory.group.stories[viewingStory.index].image_url}
             alt="Story"
-            className="max-h-screen max-w-full object-contain"
+            className="max-h-[70vh] max-w-full object-contain"
           />
+
+          {/* Story Comments */}
+          <div className="absolute bottom-4 left-4 right-4 z-50">
+            <CommentsSection 
+              storyId={viewingStory.group.stories[viewingStory.index].id} 
+              currentUserId={currentUserId || undefined}
+              variant="story"
+            />
+          </div>
         </div>
       )}
     </div>
