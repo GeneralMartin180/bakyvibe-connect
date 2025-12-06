@@ -7,6 +7,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { X, Send, Minimize2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { playNotificationSound, showBrowserNotification, requestNotificationPermission } from "@/utils/notificationSound";
+import { useUnreadMessagesContext } from "@/contexts/UnreadMessagesContext";
+
 interface Message {
   id: string;
   content: string;
@@ -30,11 +32,17 @@ interface ChatWindowProps {
 
 export function ChatWindow({ conversationId, otherUser, currentUserId, onClose }: ChatWindowProps) {
   const { toast } = useToast();
+  const { markAsRead } = useUnreadMessagesContext();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Mark messages as read when chat is opened
+  useEffect(() => {
+    markAsRead(conversationId);
+  }, [conversationId, markAsRead]);
 
   useEffect(() => {
     // Request notification permission on mount

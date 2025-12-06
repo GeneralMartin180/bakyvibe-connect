@@ -5,11 +5,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { BakyAI } from "./BakyAI";
-
+import { useUnreadMessagesContext } from "@/contexts/UnreadMessagesContext";
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
+  const { totalUnread } = useUnreadMessagesContext();
   
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -79,12 +80,17 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             </Link>
             <Link 
               to="/messages" 
-              className={`flex items-center gap-2 transition-all duration-200 hover:scale-105 ${
+              className={`relative flex items-center gap-2 transition-all duration-200 hover:scale-105 ${
                 isActive('/messages') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <MessageCircle className="w-5 h-5" />
               <span className="font-medium">Messages</span>
+              {totalUnread > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
+                  {totalUnread > 9 ? '9+' : totalUnread}
+                </span>
+              )}
             </Link>
             <Link 
               to="/profile"
@@ -151,11 +157,16 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           </Link>
           <Link 
             to="/messages" 
-            className={`flex flex-col items-center gap-1 transition-all duration-200 hover:scale-110 ${
+            className={`relative flex flex-col items-center gap-1 transition-all duration-200 hover:scale-110 ${
               isActive('/messages') ? 'text-primary' : 'text-muted-foreground'
             }`}
           >
             <MessageCircle className="w-6 h-6" />
+            {totalUnread > 0 && (
+              <span className="absolute -top-1 right-0 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
+                {totalUnread > 9 ? '9+' : totalUnread}
+              </span>
+            )}
           </Link>
           <Link 
             to="/profile"
