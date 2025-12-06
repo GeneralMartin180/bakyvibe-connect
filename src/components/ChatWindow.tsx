@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { X, Send, Minimize2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
+import { playNotificationSound, showBrowserNotification, requestNotificationPermission } from "@/utils/notificationSound";
 interface Message {
   id: string;
   content: string;
@@ -37,6 +37,8 @@ export function ChatWindow({ conversationId, otherUser, currentUserId, onClose }
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Request notification permission on mount
+    requestNotificationPermission();
     fetchMessages();
 
     const channel = supabase
@@ -55,9 +57,29 @@ export function ChatWindow({ conversationId, otherUser, currentUserId, onClose }
             const content = JSON.parse(message.content);
             if (!content.type) {
               setMessages((prev) => [...prev, message]);
+              // Play sound and show notification for messages from others
+              if (message.sender_id !== currentUserId) {
+                playNotificationSound();
+                if (isMinimized || document.hidden) {
+                  showBrowserNotification(
+                    otherUser.display_name || otherUser.username,
+                    message.content
+                  );
+                }
+              }
             }
           } catch {
             setMessages((prev) => [...prev, message]);
+            // Play sound and show notification for messages from others
+            if (message.sender_id !== currentUserId) {
+              playNotificationSound();
+              if (isMinimized || document.hidden) {
+                showBrowserNotification(
+                  otherUser.display_name || otherUser.username,
+                  message.content
+                );
+              }
+            }
           }
         }
       )
@@ -66,7 +88,7 @@ export function ChatWindow({ conversationId, otherUser, currentUserId, onClose }
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conversationId]);
+  }, [conversationId, currentUserId, otherUser, isMinimized]);
 
   useEffect(() => {
     if (!isMinimized) {
