@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PostCard } from "@/components/PostCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EditProfileModal } from "@/components/EditProfileModal";
-import { Pencil, LogOut, MessageCircle } from "lucide-react";
+import { Pencil, LogOut, MessageCircle, UserPlus, UserMinus } from "lucide-react";
 import { toast } from "sonner";
 import { useChat } from "@/contexts/ChatContext";
 
@@ -16,6 +16,9 @@ export default function Profile() {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | undefined>();
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
   const navigate = useNavigate();
   const { openChat } = useChat();
 
@@ -54,13 +57,75 @@ export default function Profile() {
       if (error) throw error;
       setProfile(data);
       
-      // Fetch posts using the actual user ID
+      // Fetch posts and follow data using the actual user ID
       if (data) {
         fetchUserPosts(data.id);
+        fetchFollowData(data.id);
       }
     } catch (error: any) {
       console.error('Error fetching profile:', error);
       setLoading(false);
+    }
+  };
+
+  const fetchFollowData = async (profileId: string) => {
+    try {
+      // Check if current user is following this profile
+      if (currentUserId && profileId !== currentUserId) {
+        const { data: followData } = await supabase
+          .from('follows')
+          .select('id')
+          .eq('follower_id', currentUserId)
+          .eq('following_id', profileId)
+          .maybeSingle();
+        
+        setIsFollowing(!!followData);
+      }
+
+      // Get followers count
+      const { count: followers } = await supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('following_id', profileId);
+
+      // Get following count
+      const { count: following } = await supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('follower_id', profileId);
+
+      setFollowersCount(followers || 0);
+      setFollowingCount(following || 0);
+    } catch (error) {
+      console.error('Error fetching follow data:', error);
+    }
+  };
+
+  const handleFollow = async () => {
+    if (!profile?.id || !currentUserId) return;
+
+    try {
+      if (isFollowing) {
+        await supabase
+          .from('follows')
+          .delete()
+          .eq('follower_id', currentUserId)
+          .eq('following_id', profile.id);
+        
+        setIsFollowing(false);
+        setFollowersCount(prev => prev - 1);
+        toast.success(`Unfollowed @${profile.username}`);
+      } else {
+        await supabase
+          .from('follows')
+          .insert({ follower_id: currentUserId, following_id: profile.id });
+        
+        setIsFollowing(true);
+        setFollowersCount(prev => prev + 1);
+        toast.success(`Following @${profile.username}`);
+      }
+    } catch (error: any) {
+      toast.error('Failed to update follow status');
     }
   };
 
@@ -209,9 +274,29 @@ export default function Profile() {
               </div>
               <div className="flex gap-2">
                 {currentUserId !== profile?.id && (
-                  <Button variant="ghost" size="icon" onClick={handleMessage} className="hover:scale-110 transition-all duration-200">
-                    <MessageCircle className="w-5 h-5" />
-                  </Button>
+                  <>
+                    <Button 
+                      variant={isFollowing ? "outline" : "default"} 
+                      size="sm"
+                      onClick={handleFollow} 
+                      className="hover:scale-105 transition-all duration-200"
+                    >
+                      {isFollowing ? (
+                        <>
+                          <UserMinus className="w-4 h-4 mr-1" />
+                          Unfollow
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="w-4 h-4 mr-1" />
+                          Follow
+                        </>
+                      )}
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={handleMessage} className="hover:scale-110 transition-all duration-200">
+                      <MessageCircle className="w-5 h-5" />
+                    </Button>
+                  </>
                 )}
                 {currentUserId === profile?.id && (
                   <>
@@ -234,6 +319,14 @@ export default function Profile() {
               <div>
                 <span className="font-semibold">{posts.length}</span>{" "}
                 <span className="text-muted-foreground">posts</span>
+              </div>
+              <div>
+                <span className="font-semibold">{followersCount}</span>{" "}
+                <span className="text-muted-foreground">followers</span>
+              </div>
+              <div>
+                <span className="font-semibold">{followingCount}</span>{" "}
+                <span className="text-muted-foreground">following</span>
               </div>
             </div>
           </div>
